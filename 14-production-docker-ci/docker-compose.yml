@@ -39,10 +39,11 @@ services:
     depends_on:
       db:
         condition: service_healthy   # migrations never run against a half-started DB
-    # alembic upgrade head runs in the app container BEFORE gunicorn starts
-    # (≈ Spring Boot's spring.flyway.enabled=true on startup). working_dir puts
-    # us where alembic.ini lives. `exec` keeps gunicorn as PID 1's child so
-    # SIGTERM (docker stop) reaches it → graceful shutdown.
+    # This single-replica Compose demo runs Alembic BEFORE gunicorn starts
+    # (≈ Spring Boot's spring.flyway.enabled=true on startup). With multiple
+    # replicas, run migrations once as a deployment job instead. working_dir
+    # puts us where alembic.ini lives. `exec` keeps gunicorn as PID 1's child
+    # so SIGTERM (docker stop) reaches it → graceful shutdown.
     working_dir: /app/11-project-architecture
     command:
       - sh

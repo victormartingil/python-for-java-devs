@@ -46,7 +46,7 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
 
 # gunicorn (process manager ≈ the JVM's container awareness, done right) with
 # uvicorn workers (the actual ASGI runtime). NO --reload in production.
-# Workers: 2×CPU+1 is the classic starting formula — compose runs 2 for the demo.
+# This single-host Compose demo uses 2 workers; measure for a real workload.
 # Migrations run BEFORE the server accepts traffic — see docker-compose.yml command.
 CMD ["gunicorn", "prodapp.main:app", \
      "-k", "uvicorn_worker.UvicornWorker", \

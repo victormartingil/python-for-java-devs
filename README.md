@@ -7,7 +7,7 @@
 
 **Python for senior Java developers — no fluff, no "what is a variable", just the deltas.**
 
-You know Spring Boot, hexagonal architecture, Maven, JPA/Flyway and JUnit. This repo teaches you Python by anchoring every concept to its Java equivalent: *"this is like X, but with these differences."* By the end you can build a production-grade API with **FastAPI + PostgreSQL + tests + Docker**, and understand the applied AI stack (LangChain / RAG / LangGraph / MCP) — without reading a 500-page book.
+You know Spring Boot, hexagonal architecture, Maven, JPA/Flyway and JUnit. This repo teaches you Python by anchoring every concept to its Java equivalent: *"this is like X, but with these differences."* By the end you can build a deployable, production-minded API with **FastAPI + PostgreSQL + tests + Docker**, and understand the applied AI stack (LangChain / RAG / LangGraph / MCP) — without reading a 500-page book.
 
 ## Who this is for
 
@@ -21,7 +21,7 @@ If you've never used Spring Boot or written tests with JUnit, this repo will mov
 
 - The modern Python toolchain: **uv**, `pyproject.toml`, ruff, mypy, pytest — mapped to Maven, Checkstyle/Spotless, the compiler, JUnit.
 - Python the language, only where it differs from Java: dynamic typing, comprehensions, decorators, `Protocol`, context managers, `asyncio` (and the GIL, honestly explained).
-- A real backend stack: **FastAPI, Pydantic, SQLAlchemy 2.0 (async), Alembic, JWT auth (PyJWT + Argon2)** — the 2026-standard equivalents of what you use today.
+- A real backend stack: **FastAPI, Pydantic, SQLAlchemy 2.0 (async), Alembic, JWT auth (PyJWT + Argon2)** — current, deliberately chosen equivalents of what you use today.
 - How a serious Python project is **architected** (the honest answer to "where is my hexagonal architecture?").
 - Applied AI with the current stack: official SDKs → LangChain (LCEL) → LangGraph agents + pgvector + MCP.
 
@@ -92,31 +92,31 @@ Reference solutions live in `exercises/solutions/` — don't peek until your tes
 
 From module **08 to 14** we build and evolve the same **"tasks" API** — the classic neutral domain:
 
-> in-memory CRUD (08) → DI + JWT auth + config (09) → real PostgreSQL persistence with migrations (10) → production-grade layered architecture (11) → full test pyramid (12) → an AI agent endpoint (13) → Docker + CI deployment (14).
+> in-memory CRUD (08) → DI + JWT auth + config (09) → real PostgreSQL persistence with migrations (10) → production-minded layered architecture (11) → full test pyramid (12) → an AI agent endpoint (13) → Docker + CI deployment (14).
 
 One project, grown the way you'd grow a real service — each module diffs it one step further.
 
 ## Ground rules of this repo
 
 - **Zero generic programming theory.** Only deltas vs Java.
-- **Every line of code runs** and is lint-clean (ruff) — CI enforces it.
-- **Nothing outdated.** Legacy tools (pip, `requirements.txt`, `python-jose`, `passlib`) appear only as explicitly labeled warnings.
+- **Runnable by construction.** Examples, tests and exercise solutions are executable; CI enforces lint, types and behavior.
+- **Current choices are explicit and checked weekly.** Older tools and patterns (`requirements.txt`, `python-jose`, `passlib`) appear only as labeled context or warnings.
 - Stack verified **July 2026**: Python 3.12+, uv, ruff, mypy, pytest, FastAPI, SQLAlchemy 2.0, Alembic, PyJWT + pwdlib (Argon2), LangChain v1 / LangGraph 1.0.
 
 ## Repository status
 
-All 15 modules (00–14) complete. Verified end-to-end, July 2026 — the full gate numbers below assume `uv sync --all-groups`:
+All 15 modules (00–14) complete. Verified end-to-end, July 2026 — the local numbers below assume `uv sync --all-groups`, Docker available and no module 10 PostgreSQL running:
 
 ```bash
-uv sync --all-groups        # 109 packages, locked in uv.lock
+uv sync --all-groups        # exact dependency versions come from uv.lock
 uv run ruff check .         # clean
 uv run ruff format --check .# clean
 uv run mypy                 # clean, 66 source files
 uv run pytest               # 123 passed, 8 skipped
 ```
 
-The 8 skips are the `postgres`-marked tests when no database is up (`cd 10-persistence-sqlalchemy-alembic && docker compose up -d` enables them). The `docker`-marked testcontainers tests (module 12) run automatically when a Docker daemon is available and skip cleanly otherwise. Module 13's AI scripts need an LLM provider — free local [Ollama](https://ollama.com) or an API key; without either they print setup instructions and exit 0 (tests prove it offline). Note: this 2026 stack uses `httpx2` — starlette 1.3.x's `TestClient` and async DB tests are built on it; legacy `httpx` appears only in the early HTTP demos (modules 00, 06).
+The 8 local skips are the `postgres`-marked tests when no database is up (`cd 10-persistence-sqlalchemy-alembic && docker compose up -d` enables them). CI provides PostgreSQL and runs **131 tests with no skips**, verifies every exercise solution, then builds the production image, runs migrations and probes `/health`. The `docker`-marked testcontainers tests (module 12) run automatically when a Docker daemon is available and skip cleanly otherwise. Module 13's AI scripts need an LLM provider — free local [Ollama](https://ollama.com) or an API key; without either they print setup instructions and exit 0 (tests prove it offline). Note: this 2026 stack uses `httpx2` — starlette 1.3.x's `TestClient` and async DB tests are built on it; legacy `httpx` appears only in the early HTTP demos (modules 00, 06).
 
 ## Contributing & license
 
-Maintained by the community — contributions welcome (see [CONTRIBUTING.md](CONTRIBUTING.md)). Released under the [MIT License](LICENSE).
+Contributions are welcome (see [CONTRIBUTING.md](CONTRIBUTING.md)). Released under the [MIT License](LICENSE).

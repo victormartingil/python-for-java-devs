@@ -12,9 +12,9 @@
 | `mvn exec:java` / `java -jar` | `uv run python script.py` |
 | `.mvn/jvm.config`, toolchains | `.python-version` |
 
-One tool — **uv** (by Astral, written in Rust) — replaces pip, venv, pyenv and Poetry. It installs Python itself, creates virtualenvs, resolves and locks dependencies, and runs things. It's 10–100× faster than pip. This is the current standard; don't learn pip first.
+This repo uses **uv** throughout. It is a strong modern choice for project and dependency management: it can install Python, create virtual environments, resolve and lock dependencies, and run tools from one fast CLI. `pip` and `venv` remain widely used and worth recognizing; you just don't need to start with them for this course.
 
-> **Legacy context (5 min, labeled):** you'll still see `pip install X`, `python -m venv .venv` and `requirements.txt` in older tutorials and Stack Overflow answers. That's the pre-uv workflow. It works, it's everywhere, and you don't need it — uv does all of it better.
+> **Ecosystem context (5 min):** you'll still see `pip install X`, `python -m venv .venv` and `requirements.txt` in tutorials, existing projects and Stack Overflow answers. That traditional workflow still works and is everywhere. This repo chooses uv's project workflow because it gives us one reproducible path from setup to CI.
 
 ## Install
 
@@ -53,7 +53,7 @@ Rules of thumb:
 
 ## The venv, in one paragraph
 
-Python isolates each project's dependencies in a **virtual environment** — a directory (`.venv/`) with its own interpreter and site-packages, roughly like a per-project local Maven repo combined with the JDK. In the old world you created and activated it by hand (`python -m venv .venv && source .venv/bin/activate`). **With uv you never touch it**: `uv sync` creates it, `uv run` uses it. If `.venv` gets corrupted, delete it and run `uv sync` again.
+Python isolates each project's dependencies in a **virtual environment** — a directory (`.venv/`) with its own interpreter and site-packages, roughly like a per-project local Maven repo combined with the JDK. In the traditional workflow you create and activate it by hand (`python -m venv .venv && source .venv/bin/activate`). **With this repo's uv workflow you normally don't touch it**: `uv sync` creates it, `uv run` uses it. If `.venv` gets corrupted, delete it and run `uv sync` again.
 
 ## How a script runs
 
