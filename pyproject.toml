@@ -36,6 +36,7 @@ web = [
     "httpx2>=2.7.0",
     "structlog>=24.1",
     "gunicorn>=26.0.0",
+    "uvicorn-worker>=0.4.0",
 ]
 # AI module (13): uv sync --group web --group ai (needs the web group too —
 # its agent endpoint uses FastAPI) or uv sync --all-groups
