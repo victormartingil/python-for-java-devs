@@ -15,11 +15,29 @@ uv sync --all-groups           # full environment (all modules)
 uv run ruff check .            # lint
 uv run ruff format .           # format (CI runs --check)
 uv run mypy                    # type check
-uv run pytest                  # full suite (123 + conditional skips)
+uv run pytest                  # 123 + conditional skips; 131 with module 10 DB running
 bash scripts/verify-solutions.sh   # prove every exercise solution passes
 ```
 
 All six must be green before a PR. A lighter `uv sync` is enough to work on fundamentals modules (00–07).
+
+CI supplies PostgreSQL so all database tests and module 10 exercise solutions run. To reproduce that locally:
+
+```bash
+docker compose -f 10-persistence-sqlalchemy-alembic/docker-compose.yml up -d --wait
+uv run pytest
+bash scripts/verify-solutions.sh
+docker compose -f 10-persistence-sqlalchemy-alembic/docker-compose.yml down -v
+```
+
+If you change dependencies, deployment behavior, or module 14, also run the production smoke path:
+
+```bash
+SECRET_KEY=local-smoke-only \
+  docker compose -f 14-production-docker-ci/docker-compose.yml up -d --build --wait
+curl --fail http://localhost:8000/health
+docker compose -f 14-production-docker-ci/docker-compose.yml down -v
+```
 
 ## Repo conventions (enforced by CI + review)
 

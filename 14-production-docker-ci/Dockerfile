@@ -14,7 +14,7 @@ WORKDIR /app
 # pyproject.toml/uv.lock change — code edits never re-download packages
 # (≈ mvn dependency:go-offline in a cache-friendly CI job).
 COPY pyproject.toml uv.lock ./
-RUN uv sync --frozen --no-dev --no-install-project --no-editable \
+RUN uv sync --frozen --no-dev --group web --no-install-project --no-editable \
     && uv pip list > /dev/null  # fail loudly if the venv is inconsistent
 
 # ---- Stage 2: the runtime image ---------------------------------------------
@@ -46,10 +46,10 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
 
 # gunicorn (process manager ≈ the JVM's container awareness, done right) with
 # uvicorn workers (the actual ASGI runtime). NO --reload in production.
-# Workers: 2×CPU+1 is the classic starting formula — compose runs 2 for the demo.
+# This single-host Compose demo uses 2 workers; measure for a real workload.
 # Migrations run BEFORE the server accepts traffic — see docker-compose.yml command.
 CMD ["gunicorn", "prodapp.main:app", \
-     "-k", "uvicorn.workers.UvicornWorker", \
+     "-k", "uvicorn_worker.UvicornWorker", \
      "--bind", "0.0.0.0:8000", \
      "--workers", "2", \
      "--graceful-timeout", "30"]

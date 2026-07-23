@@ -2,7 +2,7 @@
 
 **The question this module answers:** *"In Java/Spring the reference is hexagonal architecture. What's the equivalent — equally rigorous — standard in Python?"*
 
-**The honest answer:** the settled best practice in the FastAPI ecosystem is **not** formal ports & adapters. It's a **domain-modular layered architecture** that achieves the same goals — testability, low coupling, the ability to swap infrastructure — with less ceremony, leaning on duck typing and dependency injection. This module is the tasks API from module 10 (plus the auth from module 09) refactored to that standard. This is the structure modules 12–14 build on.
+**The honest answer:** FastAPI has no single official application architecture. This repo uses a **domain-modular layered architecture** as a pragmatic default for service-oriented FastAPI applications. It achieves the goals we care about — testability, low coupling, the ability to swap infrastructure — with less ceremony, leaning on duck typing and dependency injection. This module is the tasks API from module 10 (plus the auth from module 09) refactored to that design. Modules 12–14 build on it.
 
 ## Run it
 
@@ -59,11 +59,11 @@ Dependency direction: `router → service → repository`. `core/` is shared by 
 | Composition root | `dependencies.py` + `main.py` | the only place concrete classes are named |
 | `@MockBean` in tests | `app.dependency_overrides[...]` | see `tests/conftest.py` |
 
-## Why Python converged here (and Java didn't)
+## Why this structure fits Python
 
 - **Structural vs nominal typing.** Java needs `interface TaskRepository` + `implements` or nothing compiles. Python has `typing.Protocol` (module 04): any object with the right methods *is* a `TaskRepository` — no inheritance, no registration. The "port" costs 6 lines and exists mainly for mypy and readers; the runtime never needed it.
-- **Duck typing + DI = the swap for free.** `TaskService(repo)` accepts anything with `async def create/list/get/update/delete`. The Postgres repository and the in-memory test fake share no base class. Formal ports & adapters would buy you nothing extra at runtime.
-- **Culture.** "Simple is better than complex" (Zen of Python). The community tried Java-style ceremony (zope.interface, ABC-heavy frameworks) and rejected it; the ecosystem converged on small, explicit, convention-driven structure. FastAPI's own docs and the big open-source FastAPI codebases all look like this module.
+- **Duck typing + DI make the swap cheap.** `TaskService(repo)` accepts anything with `async def create/list/get/update/delete`. The Postgres repository and the in-memory test fake share no base class. More formal ports and adapters may add little until the domain has multiple real adapters or needs stronger boundary enforcement.
+- **The framework stays deliberately flexible.** FastAPI documents routers, dependencies and multi-file applications without prescribing one architecture. Real projects use layer-first, domain-first and hexagonal variants. This repo chooses domain modules plus explicit wiring because it keeps related code together while preserving testable boundaries.
 
 ## When to harden toward formal hexagonal
 
@@ -81,7 +81,7 @@ class TaskRepository(Protocol):          # the port, made explicit (already done
 # - keep services free of Pydantic too (domain objects in, domain objects out)
 ```
 
-That's it — no second framework, no parallel class hierarchy. The architecture in this module *is* the first 80% of hexagonal.
+That's it — no second framework, no parallel class hierarchy. This design already provides most of the boundaries teams seek from hexagonal architecture, while leaving a clear incremental path when the domain needs more formality.
 
 ## The killer demo: tests per layer
 
