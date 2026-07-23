@@ -5,6 +5,14 @@
 [![Python 3.12+](https://img.shields.io/badge/Python-3.12%2B-blue.svg)](https://www.python.org/downloads/)
 [![uv](https://img.shields.io/badge/deps-uv-blueviolet.svg)](https://docs.astral.sh/uv/)
 
+<p align="center">
+  <img
+    src="docs/assets/python-for-java-devs-banner.jpg"
+    alt="Python for Java developers — skip the basics, learn what changes"
+    width="900"
+  >
+</p>
+
 **Python for senior Java developers — no fluff, no "what is a variable", just the deltas.**
 
 You know Spring Boot, hexagonal architecture, Maven, JPA/Flyway and JUnit. This repo teaches you Python by anchoring every concept to its Java equivalent: *"this is like X, but with these differences."* By the end you can build a deployable, production-minded API with **FastAPI + PostgreSQL + tests + Docker**, and understand the applied AI stack (LangChain / RAG / LangGraph / MCP) — without reading a 500-page book.
