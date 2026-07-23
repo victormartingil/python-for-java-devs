@@ -21,7 +21,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))  # scripts run from anywhere
 
-from provider import DEFAULT_CHAT_MODELS, get_provider, provider_status
+from provider import default_chat_model, get_provider, provider_status
 from pydantic import BaseModel, Field
 
 
@@ -47,7 +47,7 @@ def classify_with_openai() -> TicketClassification:
 
     client = OpenAI()  # reads OPENAI_API_KEY
     response = client.chat.completions.create(
-        model=DEFAULT_CHAT_MODELS["openai"],
+        model=default_chat_model("openai"),
         temperature=0,  # 0 = deterministic-ish; >1 = creative. ≈ a sampling knob, not a seed.
         messages=[
             {"role": "system", "content": SYSTEM_PROMPT},
@@ -65,7 +65,7 @@ def classify_with_anthropic() -> TicketClassification:
 
     client = anthropic.Anthropic()  # reads ANTHROPIC_API_KEY
     message = client.messages.create(
-        model=DEFAULT_CHAT_MODELS["anthropic"],
+        model=default_chat_model("anthropic"),
         max_tokens=300,
         temperature=0,
         system=SYSTEM_PROMPT,  # Anthropic: system is a top-level param, not a message
@@ -81,7 +81,7 @@ def classify_with_ollama() -> TicketClassification:
 
     client = OpenAI(base_url="http://localhost:11434/v1", api_key="ollama")
     response = client.chat.completions.create(
-        model=DEFAULT_CHAT_MODELS["ollama"],
+        model=default_chat_model("ollama"),
         temperature=0,
         messages=[
             {"role": "system", "content": SYSTEM_PROMPT},
@@ -106,7 +106,7 @@ def main() -> None:
         "ollama": classify_with_ollama,
     }[provider]
 
-    print(f"Provider: {provider} · model: {DEFAULT_CHAT_MODELS[provider]}")
+    print(f"Provider: {provider} · model: {default_chat_model(provider)}")
     print(f"Ticket:   {TICKET}\n")
     result = classify()
     print("Validated structured output (Pydantic):")

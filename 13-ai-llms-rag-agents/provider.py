@@ -70,8 +70,20 @@ def get_provider() -> str:
     return provider
 
 
-def _ollama_reachable(host: str = "localhost", port: int = 11434) -> bool:
+def _ollama_host_port() -> tuple[str, int]:
+    """Where Ollama lives. Honors OLLAMA_HOST — the same env var the
+    langchain_ollama client reads, so the probe and the client always agree
+    (accepts 'host:port' or a full URL; default localhost:11434)."""
+    raw = os.environ.get("OLLAMA_HOST", "").strip() or "localhost:11434"
+    raw = raw.removeprefix("http://").removeprefix("https://").rstrip("/")
+    host, _, port = raw.partition(":")
+    return host or "localhost", int(port) if port.isdigit() else 11434
+
+
+def _ollama_reachable(host: str | None = None, port: int | None = None) -> bool:
     """Cheap TCP probe — sub-second, no HTTP client needed."""
+    if host is None or port is None:
+        host, port = _ollama_host_port()
     try:
         with socket.create_connection((host, port), timeout=0.5):
             return True
@@ -88,7 +100,11 @@ def provider_status(provider: str | None = None) -> tuple[bool, str]:
     provider = provider or get_provider()
     if provider == "ollama":
         ok = _ollama_reachable()
-    elif provider == "openai":
+        if ok:
+            return True, ""
+        host, port = _ollama_host_port()
+        return False, SETUP_INSTRUCTIONS["ollama"].replace("localhost:11434", f"{host}:{port}")
+    if provider == "openai":
         ok = bool(os.environ.get("OPENAI_API_KEY"))
     else:
         ok = bool(os.environ.get("ANTHROPIC_API_KEY"))
@@ -105,6 +121,15 @@ def require_provider() -> str:
     return provider
 
 
+def default_chat_model(provider: str) -> str:
+    """The demo model for a provider. For Ollama, OLLAMA_MODEL overrides it —
+    local models are pullable artifacts, so make the choice an env var,
+    like overriding a Spring property: OLLAMA_MODEL=qwen3.5:9b"""
+    if provider == "ollama":
+        return os.environ.get("OLLAMA_MODEL", "").strip() or DEFAULT_CHAT_MODELS["ollama"]
+    return DEFAULT_CHAT_MODELS[provider]
+
+
 def get_chat_model(temperature: float = 0.0, model: str | None = None) -> BaseChatModel:
     """A LangChain chat model for the active provider.
 
@@ -113,7 +138,7 @@ def get_chat_model(temperature: float = 0.0, model: str | None = None) -> BaseCh
     reproducible; raise it for creative tasks.
     """
     provider = get_provider()
-    model = model or DEFAULT_CHAT_MODELS[provider]
+    model = model or default_chat_model(provider)
     if provider == "ollama":
         from langchain_ollama import ChatOllama
 

@@ -50,11 +50,20 @@ ollama serve               # leave running in a terminal
 ollama pull llama3.2 && ollama pull nomic-embed-text
 ```
 
-Embeddings are separate: Anthropic has no embeddings API, so `get_embeddings()` picks OpenAI when keyed, else Ollama (`EMBEDDINGS_PROVIDER=openai|ollama` to force). All scripts + tests were verified end-to-end against Ollama (llama3.2, nomic-embed-text) and the pgvector container.
+Embeddings are separate: Anthropic has no embeddings API, so `get_embeddings()` picks OpenAI when keyed, else Ollama (`EMBEDDINGS_PROVIDER=openai|ollama` to force).
+
+Two more knobs, same "Spring property override" idea:
+
+```bash
+OLLAMA_MODEL=qwen3.5:9b    # any pulled Ollama tag; default llama3.2
+OLLAMA_HOST=http://gpu-box:11434   # remote Ollama; probe and client both honor it
+```
+
+**Live-verified 2026-07-23:** all six scripts ran end-to-end against a real Ollama (llama3.2 and qwen3.5:9b), `nomic-embed-text` embeddings and the pgvector container — RAG eval PASS, full agent loop with tool calling + human-in-the-loop, MCP roundtrip and SSE streaming. The test suite stays hermetic either way: it points the provider probe at a dead `OLLAMA_HOST` port, so it passes on machines with or without a live Ollama.
 
 ⚠️ **Cost warning.** Agents burn tokens: every loop iteration re-sends the conversation. The defaults are the cheap models (`gpt-4o-mini`, `claude-3-5-haiku`, local llama3.2). Do not point these scripts at a flagship model "to see what happens" — what happens is your invoice.
 
-⚠️ **Small-model caveat.** A 3B local model occasionally ignores retrieved context; scripts 04/06 carry an "AUTHORITATIVE FACTS" hint in the tool result to compensate. With `gpt-4o-mini`+ the grounding is reliable. This is exactly why script 03 has an eval step.
+⚠️ **Small-model caveat — measured, not folklore.** Classifying the script 01 ticket ("charge after I cancelled my subscription"): llama3.2 (3B) says `technical`/`high`, qwen3.5:9b says `billing`/`medium` — the 9B is right. A 3B also occasionally ignores retrieved context; scripts 04/06 carry an "AUTHORITATIVE FACTS" hint in the tool result to compensate. With `gpt-4o-mini`+ the grounding is reliable. This is exactly why script 03 has an eval step.
 
 ## The agent frameworks landscape (2026)
 

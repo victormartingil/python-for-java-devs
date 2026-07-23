@@ -18,6 +18,8 @@ def clean_llm_env(monkeypatch: pytest.MonkeyPatch) -> pytest.MonkeyPatch:
     """No provider configured: ollama 'unreachable', no API keys."""
     monkeypatch.delenv("LLM_PROVIDER", raising=False)
     monkeypatch.delenv("EMBEDDINGS_PROVIDER", raising=False)
+    monkeypatch.delenv("OLLAMA_MODEL", raising=False)
+    monkeypatch.delenv("OLLAMA_HOST", raising=False)
     monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
     # Deterministic offline: pretend the Ollama port is closed even if a
