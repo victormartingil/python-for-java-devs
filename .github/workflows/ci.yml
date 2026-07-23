@@ -13,6 +13,22 @@ on:
 jobs:
   quality:
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql+asyncpg://tasks:tasks@localhost:5432/tasks
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: tasks
+          POSTGRES_PASSWORD: tasks
+          POSTGRES_DB: tasks
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U tasks -d tasks"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 15
     steps:
       - uses: actions/checkout@v4
 
@@ -34,9 +50,8 @@ jobs:
         run: uv run mypy
 
       - name: Tests (pytest)
-        # Marker behavior here: `postgres` tests skip (no DB service in this
-        # workflow); `docker` testcontainers tests RUN — ubuntu-latest ships a
-        # Docker daemon, same discipline as a Spring CI with Testcontainers.
+        # Both database paths run here: module 10 uses the PostgreSQL service;
+        # module 12 starts its own container through testcontainers.
         # Module 13's AI tests are offline by construction (no keys needed).
         run: uv run pytest
 
@@ -45,6 +60,22 @@ jobs:
     # Solutions are excluded from the root suite by design, so they get their
     # own job — it overlays each solution onto its stub and runs the tests.
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql+asyncpg://tasks:tasks@localhost:5432/tasks
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: tasks
+          POSTGRES_PASSWORD: tasks
+          POSTGRES_DB: tasks
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U tasks -d tasks"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 15
     steps:
       - uses: actions/checkout@v4
 
@@ -57,6 +88,42 @@ jobs:
         run: uv sync --frozen --all-groups
 
       - name: Verify exercise solutions pass their tests
-        # Module 10's exercises are `postgres`-marked: they skip here (no DB
-        # service) and run locally via `docker compose up -d` (module README).
         run: bash scripts/verify-solutions.sh
+
+  production-smoke:
+    runs-on: ubuntu-latest
+    env:
+      COMPOSE_FILE: 14-production-docker-ci/docker-compose.yml
+      COMPOSE_PROJECT_NAME: python-for-java-devs-smoke
+      SECRET_KEY: ci-smoke-secret-not-for-production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate Docker Compose
+        run: docker compose config --quiet
+
+      - name: Build and start the production stack
+        run: docker compose up -d --build --wait
+
+      - name: Verify health and runtime user
+        run: |
+          response="$(curl --fail --silent --show-error \
+            --retry 10 --retry-all-errors --retry-delay 2 \
+            http://localhost:8000/health)"
+          test "$response" = '{"status":"ok"}'
+
+          runtime_uid="$(docker compose exec -T app id -u)"
+          test "$runtime_uid" != "0"
+
+          if docker compose logs --no-color app | grep -F "uvicorn.workers.UvicornWorker"; then
+            echo "Deprecated Uvicorn worker detected"
+            exit 1
+          fi
+
+      - name: Show production logs on failure
+        if: failure()
+        run: docker compose logs --no-color
+
+      - name: Stop the production stack
+        if: always()
+        run: docker compose down -v --remove-orphans
