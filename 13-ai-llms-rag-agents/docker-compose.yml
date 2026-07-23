@@ -1,0 +1,24 @@
+# Postgres 16 + pgvector for module 13's RAG and LangGraph checkpoint demos.
+# Port 5433 so it can coexist with the module 10/11 databases on 5432.
+#   docker compose up -d      # start
+#   docker compose down -v    # stop and DELETE the data volume
+services:
+  rag-db:
+    image: pgvector/pgvector:pg16   # official pgvector image: postgres:16 + extension
+    container_name: rag-db-13
+    environment:
+      POSTGRES_USER: tasks
+      POSTGRES_PASSWORD: tasks
+      POSTGRES_DB: rag
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata-13:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tasks -d rag"]
+      interval: 2s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  pgdata-13:

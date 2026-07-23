@@ -1,0 +1,11 @@
+# Docker build context hygiene (used by 14-production-docker-ci/Dockerfile,
+# which builds from the repo root). Keep images small and builds cache-friendly.
+.git
+.venv
+**/__pycache__
+**/.pytest_cache
+.ruff_cache
+.mypy_cache
+**/.env
+*.pyc
+.DS_Store

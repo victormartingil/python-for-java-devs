@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    # Weekly drift check (Mondays 06:17 UTC): re-runs everything, including
+    # the exercise-solutions job, so a dependency bump that breaks a kata
+    # gets caught even without a PR.
+    - cron: "17 6 * * 1"
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --frozen --all-groups
+
+      - name: Lint (ruff)
+        run: uv run ruff check .
+
+      - name: Format check (ruff)
+        run: uv run ruff format --check .
+
+      - name: Type check (mypy)
+        run: uv run mypy
+
+      - name: Tests (pytest)
+        # Marker behavior here: `postgres` tests skip (no DB service in this
+        # workflow); `docker` testcontainers tests RUN — ubuntu-latest ships a
+        # Docker daemon, same discipline as a Spring CI with Testcontainers.
+        # Module 13's AI tests are offline by construction (no keys needed).
+        run: uv run pytest
+
+  exercise-solutions:
+    # The exercises are the learner's contract: their tests must be passable.
+    # Solutions are excluded from the root suite by design, so they get their
+    # own job — it overlays each solution onto its stub and runs the tests.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --frozen --all-groups
+
+      - name: Verify exercise solutions pass their tests
+        # Module 10's exercises are `postgres`-marked: they skip here (no DB
+        # service) and run locally via `docker compose up -d` (module README).
+        run: bash scripts/verify-solutions.sh

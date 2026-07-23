@@ -1,0 +1,54 @@
+# The full production stack: app + Postgres, migrations on startup, healthchecks.
+#   docker compose up --build     # build the image and start everything
+#   curl localhost:8000/health    # → {"status":"ok"}
+#   docker compose down -v        # stop and DELETE the data volume
+services:
+  db:
+    image: postgres:16
+    container_name: tasks-db-14
+    environment:
+      POSTGRES_USER: tasks
+      POSTGRES_PASSWORD: tasks
+      POSTGRES_DB: tasks
+    # NO host port published: only the app talks to the DB, over the internal
+    # compose network (≈ not exposing the DB container port in your k8s Service).
+    volumes:
+      - pgdata-14:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tasks -d tasks"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+  app:
+    build:
+      context: ..                                   # repo root — module 11's code is the app
+      dockerfile: 14-production-docker-ci/Dockerfile
+    container_name: tasks-app-14
+    # Secrets and environment-specific config arrive as env vars — never baked
+    # into the image (≈ externalized config / k8s Secret, not application.yml in the jar).
+    environment:
+      DATABASE_URL: postgresql+asyncpg://tasks:tasks@db:5432/tasks  # 'db' = compose DNS
+      # Dev default so the demo boots with zero setup; a REAL deployment sets
+      # SECRET_KEY in the environment/secret store (compose warns when unset).
+      SECRET_KEY: ${SECRET_KEY:-dev-only-compose-secret-change-me-in-real-deployments}
+      ALGORITHM: HS256
+      ACCESS_TOKEN_EXPIRE_MINUTES: "30"
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy   # migrations never run against a half-started DB
+    # alembic upgrade head runs in the app container BEFORE gunicorn starts
+    # (≈ Spring Boot's spring.flyway.enabled=true on startup). working_dir puts
+    # us where alembic.ini lives. `exec` keeps gunicorn as PID 1's child so
+    # SIGTERM (docker stop) reaches it → graceful shutdown.
+    working_dir: /app/11-project-architecture
+    command:
+      - sh
+      - -c
+      - "alembic upgrade head && exec gunicorn prodapp.main:app -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000 --workers 2 --graceful-timeout 30"
+    stop_grace_period: 40s   # let in-flight requests finish before SIGKILL
+
+volumes:
+  pgdata-14:

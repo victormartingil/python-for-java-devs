@@ -1,0 +1,24 @@
+# PostgreSQL 16 for the tasks API (≈ your dockerized dev database).
+# Usage (from this directory):
+#   docker compose up -d      # start
+#   docker compose down -v    # stop and DELETE the data volume
+services:
+  db:
+    image: postgres:16
+    container_name: tasks-db-10
+    environment:
+      POSTGRES_USER: tasks
+      POSTGRES_PASSWORD: tasks
+      POSTGRES_DB: tasks
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata-10:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tasks -d tasks"]
+      interval: 2s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  pgdata-10:
