@@ -30,12 +30,13 @@ jobs:
           --health-timeout 3s
           --health-retries 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v9.0.0
         with:
           enable-cache: true
+          prune-cache: true
 
       - name: Install dependencies
         run: uv sync --frozen --all-groups
@@ -77,12 +78,13 @@ jobs:
           --health-timeout 3s
           --health-retries 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v5
+        uses: astral-sh/setup-uv@v9.0.0
         with:
           enable-cache: true
+          prune-cache: true
 
       - name: Install dependencies
         run: uv sync --frozen --all-groups
@@ -97,7 +99,7 @@ jobs:
       COMPOSE_PROJECT_NAME: python-for-java-devs-smoke
       SECRET_KEY: ci-smoke-secret-not-for-production
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Validate Docker Compose
         run: docker compose config --quiet
